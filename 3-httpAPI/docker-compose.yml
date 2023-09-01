@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  pudimLights:
+    container_name: pls-back
+    image: pls-back:latest
+    restart: unless-stopped
+    networks:
+      - pudimbackend
+
+networks:
+  pudimbackend:
+    name: pudim-network

@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pls-backend-configmap
+data:
+  hostname: |
+    mosquitto-service.pudimnetes.svc.cluster.local
+  port: |
+    1883
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pls-backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pls-back
+  template:
+    metadata:
+      labels:
+        app: pls-back
+    spec:
+      containers:
+        - name: pls-container
+          image: lerenner/pudim-lights-backend:main
+          ports:
+            - containerPort: 3000
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: pls-backend-configmap-volume
+              mountPath: /config
+      volumes:
+        - name: pls-backend-configmap-volume
+          configMap:
+            name: pls-backend-configmap
+            items:
+              - key: hostname
+                path: hostname
+              - key: port
+                path: port
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pls-backend-service
+spec:
+  selector:
+    app: pls-back
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pls-backend-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: lights.pudim.xyz
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: pls-backend-service
+                port:
+                  number: 3000
+  tls:
+    - hosts:
+        - lights.pudim.xyz
+      secretName: lights-tls
