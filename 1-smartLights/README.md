@@ -1,52 +1,45 @@
-# Main esp32 controller code
+# Part 1: Smart lights
 
-This directory contains code for the esp32 that will control the lights. It will subscribe to PLS/2 on the local MQTT server and listen for new commands. It also checks for the state of a switch, so the lights can also be controlled with a physical button. 
+In this part of the project, my goal was to make a lightbulb that connects to wifi and subscribes to a specific topic on my MQTT broker. I ended up setting up two different lights: one with a Raspberry Pi, and one with an esp32.
 
-## Wiring it up
+## Setting up a DIY smart light with an esp32
 
-To prepare the esp32, you only need to wire up the button between pin 13 and GND. The relay module will need pins 27, VCC and GND. That's all you need to make this controller!
+### Wiring it up
 
-## Programming it
+For this part, I needed to wire up two things: a switch and the relay module. In this case I used a two channel relay to control a small desklamp that I have. 
 
-First of all, you'll need to edit a little bit of code! In esp32LightController.ino, you'll need to set the correct hostname and port for the mqtt server, as well as your wifi credentials. You can also customize the topic the esp32 will listen to.
+![Relay module](./relay.png)
 
-I recommend arduino-cli to flash code on microcontrollers. If you have arduino-cli installed, all you need to do is run the preinstall, which will install some needed libraries and platforms, and then run `make upload` to send the code to the board. Make sure to check if your board is on the same TTY as mine (its in the makefile)!
+The switch was be wired up to pins 13 an GND. The relay module connected to pins 27, VCC and GND. After that, I substituted the switch of the desklamp with the relay module. Remember: this part is a little bit dangerous because it deals with wall power!
 
-If you prefer to use another programmer, you simply need to flash esp32LightController.ino to the esp32 board!
+### Programming it
 
-## Testing
+If you want to try this yourself, you'll need to edit a little bit of code! In esp32.ino, you'll need to set the correct hostname and port for the mqtt server, as well as your wifi credentials. You can also customize the topic the esp32 will listen to.
 
-Send manually a message to your mqtt broker and check if the relay clicks! If not, check the serial connection and see if your esp was able to connect to wifi and to the mqtt broker.
-
-
-======================================
+I usually use arduino-cli to flash code on microcontrollers. To be able to flash this code with arduino-cli, first its important to run the preinstall, which will install some needed libraries and platforms, and then run `make upload` to send the code to the board. At this stage its important to check if the board is mounted to /dev/ttyUSB0.
 
 
-# Main raspberry pi controller code
+# Setting up a DIY smart light with a Raspberry Pi
 
-This directory contains code for the raspberry pi that will control the lights. It will subscribe to PLS/1 on the local MQTT server and listen for new commands. It also checks for the state of a switch, so the lights can also be controlled with a physical button.
+I ended up wanting to automate my second desk lamp, and I took advantage of the face I already had a Raspberry Pi set up at the other side of my table to turn on my pc remotely (I should probably document that somewhere, because is a fun and stupid project that I did). Because of that, I ended up just adding a relay module to it and programming a little bit od python code to connect to the mqtt broker.
 
 ## Wiring it up
 
-To prepare the raspberry pi, you only need to wire up the button between pin 17 and GND. The relay module will need pins 27, VCC and GND. That's all you need to connect circuit-wise!
+To connect the Raspbery Pi, I simply wired up the button between pin 17 and GND. The relay module needed pins 27, VCC and GND. After that, just like before, I substituted the lamp switch with the relay module.
 
 ## Setting up the software
 
-First of all: you need to install Raspberry Pi OS to the raspberry pi. After setting it up, just make a copy of button.py and mqtt.py in the directory you prefer (but keep that directory in mind). You can run the files directly to make sure they are running correctly, but for the day to day use, we'll prefer the code to run at startup.
+After installing Raspberry Pi OS to the raspberry pi, I just made a copy of button.py and mqtt.py in the Pi home directory. If you want to follow along, remember to change the hostname and port of the broker in the mqtt.py file! To run the code every time at startup, I used two things: tmux and crontab. Crontab comes with basically any standard linux installation. To install tmux on a raspberry pi, just type `sudo apt install tmux`.
 
-To run the code, we will use a tool called tmux. It allows you to run whatever command you want in the background, and check on it from anywhere! If you don't have it installed, its simplt to get it:  `sudo apt install tmux`
-
-After that, run  `crontab -e`  and add these lines to the end of the file:
+After that, I ran `crontab -e` and added these lines to the end of the file:
 
     @reboot tmux new-session -d -s "mqttSub" "python3 /home/pi/mqtt.py"
     @reboot tmux new-session -d -s "button" "python3 /home/pi/button.py"
 
-Remember! If you put the files on a different location, you'll need to change this part!
-
-After that, just save the file and restart the raspberry pi. If everything goes right, you should see 2 sessions open on tmux when it reboots:
+After that, I just saved the file and rebooted the pi to check if everything was working. If everything goes right, you should see 2 sessions open on tmux when it reboots:
 
     pi@LeLights:~/ # tmux ls
     button: 1 windows (created Sat Aug 26 05:36:02 2023) [80x24]
     mqttSub: 1 windows (created Fri Sep  1 00:54:23 2023) [80x24]
 
-Try sending an mqtt packet and see if the lights turn on!
+Now, sending a packet should turn on the lights!
