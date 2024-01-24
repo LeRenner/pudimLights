@@ -1,3 +1,5 @@
+### This project is now obsolete. Check ouy [neoPudimLights](https://github.com/LeRenner/neoPudimLights)
+
 # Pudim Lights
 
 This repository documents the DIY smart lights I set up in my room, and the system behind them. They can be turned on with a button, with a website, or anything else connected to the internet! 
