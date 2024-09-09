@@ -1,4 +1,4 @@
-### This project is now obsolete. Check ouy [neoPudimLights](https://github.com/LeRenner/neoPudimLights)
+### This project still works, but it source has changed! You can check [neoPudimLights](https://github.com/LeRenner/neoPudimLights) for the updated source code.
 
 # Pudim Lights
 
